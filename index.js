@@ -8,10 +8,11 @@ var Characteristic;
 
 function AirKoreaAccessory(log, config) {
     this.log = log;
-    this.name = config.name;
+    this.name = config.show_last_updated_date ? this.getLastDate() : config.name;
     this.key = config.api_key;
     this.sensor = config.sensor || 'air_quality';
     this.station = config.station;
+    this.show_last_updated_date = config.show_last_updated_date || false;
     this.polling = config.polling || false;
     this.interval = config.interval * 60 * 1000;
 
@@ -87,6 +88,19 @@ AirKoreaAccessory.prototype = {
                     case 200:
 
                         that.log.debug('Time is: %s', data.list[0].dataTime);
+
+                        if(that.show_last_updated_date) {
+                            var date = new Date(data.list[0].dataTime);
+
+                            var date_str = that.getDateString(date);
+
+                            that.sensorService
+                                .getCharacteristic(Characteristic.Name)
+                                .setValue(date_str); 
+
+                            that.log.debug('change title => %s', date_str);
+                        }
+
                         that.log.debug('Station is: %s', data.parm.stationName);
 
                         switch (that.sensor) {
@@ -194,6 +208,12 @@ AirKoreaAccessory.prototype = {
         callback();
     },
 
+    getDateString: function(date) { 
+        if(!date) return '-일 -시 현재';
+
+        return date.getDate() + '일 ' + date.getHours() + '시 현재';
+    },
+
     getServices: function () {
         var services = [];
 
@@ -207,6 +227,10 @@ AirKoreaAccessory.prototype = {
 
         this.accessoryInformationService
             .setCharacteristic(Characteristic.Identify)
+            .on('set', this.identify.bind(this));
+
+        this.accessoryInformationService
+            .setCharacteristic(Characteristic.Version)
             .on('set', this.identify.bind(this));
 
         switch (this.sensor) {
