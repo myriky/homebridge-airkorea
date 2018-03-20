@@ -8,7 +8,7 @@ var Characteristic;
 
 function AirKoreaAccessory(log, config) {
     this.log = log;
-    this.name = config.show_last_updated_date ? this.getLastDate() : config.name;
+    this.name = config.show_last_updated_date ? this.getDateString() : config.name;
     this.key = config.api_key;
     this.sensor = config.sensor || 'air_quality';
     this.station = config.station;
